@@ -1,4 +1,7 @@
 # CBI-V13
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fea10458a9014610b041c0fb959809ff)](https://app.codacy.com/gh/zincdigitalofmiami/CBI-V13?utm_source=github.com&utm_medium=referral&utm_content=zincdigitalofmiami/CBI-V13&utm_campaign=Badge_Grade)
+
 Crystal Ball V13
 Project Crystal Ball (CBI-V13) — Model & Pipeline Design
 📐 Core Pipeline Architecture
