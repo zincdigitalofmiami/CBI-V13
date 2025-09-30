@@ -10,6 +10,7 @@ Table of Contents
 - Repository Structure
 - Environment & Configuration
 - Quick Start
+- Review Package
 - Local Development
 - Data Pipelines
 - Dashboard Pages
@@ -421,3 +422,9 @@ Roadmap
 
 License
 This project is licensed under the MIT License. See LICENSE for details.
+
+
+
+Review Package
+- For consolidated TODO + scaffolding plan and how to verify, see REVIEW_PACKAGE.md.
+- Quick links inside include TODAY_TODO.md and GO_LIVE_REVIEW.md for your immediate approval.
