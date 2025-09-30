@@ -60,9 +60,45 @@ make app
 
 Current pages (app/pages):
 - Health: Connection checks, row counts, and latest records; tips for DATABASE_URL vs Cloud SQL IAM.
-- Market Intelligence: Prices, baseline forecasts, and sentiment/indicators that feed procurement signals.
-- Strategy Lab & Supply Chain Map: Scenario tools and a map view for geo risks and supply chain nodes.
-- Trade Intelligence: Policy/FX/trade insights with timelines, congressional items, country snapshots, FX panel, and a 'Trump Effect' monitor; contextual only (the BUY/WATCH/HOLD signal remains model-driven on the Command Center).
+
+- Page 1 — Procurement Command Center (Chris’s Daily Decision Page):
+  - Traffic Light Signal System (giant circular indicator):
+    - RED: "HOLD - Volatility >8% or price >$0.65/lb"
+    - YELLOW: "WATCH - Decision zone, check scenarios"
+    - GREEN: "BUY NOW - Optimal window detected"
+  - Confidence meter (0–100% based on neural network agreement)
+  - Dollar impact display: e.g., "Buying today vs waiting: +$47,000 cost" or "- $23,000 savings"
+  - Live Price Intelligence (main chart + overlays):
+    - ZL futures with last 5 purchase points, AI next-30-day forecast band, key support/resistance
+    - Volume spikes correlated with China buying
+  - Real-time drivers side panel: China overnight buying, Brazil weather, crush margins, fund positioning
+  - Procurement Scenarios: sliders for need-in-30-days, harvest pressure, 50/50 hedge; output table + risk alerts
+
+- Page 2 — Sentiment & Market Intelligence:
+  - Market Mood Ring (semi-circle gauge): Extremely Bearish ← Neutral → Extremely Bullish
+  - Weighted inputs: News sentiment (40%), Fund positioning (30%), Technicals (20%), Weather (10%)
+  - 16-Category News Grid (4x4) with drilldowns and impact scores
+  - Narrative Intelligence (auto-updated every 4 hours) with key changes since yesterday
+
+- Page 3 — Strategy (Chris’s Business Intelligence Page):
+  - Optimal Procurement Windows: calendar heatmap + seasonal patterns; overlays for WASDE, OPEX, FND
+  - Contract Strategy Optimizer: current mix (e.g., 40/30/30), comparison (spot vs 30/90-day), basis/storage implications
+  - Industry Intelligence (4 columns): Key Players, Pricing Trends, Recent Developments, Market Structure
+  - Deep Dive Analytics Tabs:
+    1) U.S. Production & Storage (map + weekly crush/utilization table)
+    2) Global Supply & Demand (stacked S&D + trade flow diagram)
+    3) Soy Complex Value Chain (interactive flow + profitability calc)
+    4) Food & Industrial Demand (restaurant metrics, competing oils, biodiesel curve)
+  - Strategy Tools (sidebar): quick calculators, performance metrics, AI strategy suggestions
+
+- Page 4 — Geopolitical & Trade Intelligence (context only — Command Center owns the signal):
+  - Tariff Threat Matrix: probability and proposed rate by country/commodity
+  - Trump Feed Impact: trade-keyword parsing, historical correlation, alerting (e.g., HIGH RISK windows)
+  - Policy Timeline and Congressional Trade Votes: upcoming votes, pass probabilities, impact assessment
+  - Country Snapshots: US–China, Brazil, India/Pakistan, EU/UK key metrics
+  - FX & Macro Panel: BRL/USD, DXY, WTI, rates (features.fx_trade)
+  - Trade War Alerts: DEFCON level, flash updates, historical patterns, action items
+
 - Admin (protected by ADMIN_TOKEN): Parameters (e.g., refresh cadence), manual pipeline triggers.
 
 ## 🏗️ Architecture
