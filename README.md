@@ -1,275 +1,173 @@
 # CBI-V13: Crystal Ball Intelligence Platform
 
-**Soybean Oil Market Intelligence & Procurement Decision Support System**
+Soybean Oil Market Intelligence & Procurement Decision Support
 
-Crystal Ball V13 (CBI-V13) is an AI-powered platform that provides real-time market intelligence, price forecasting, and procurement recommendations for soybean oil trading and procurement decisions.
+CBI-V13 is an AI-driven platform that ingests market, policy, and macro data; engineers features; trains baseline and advanced models; and serves BUY/WATCH/HOLD procurement guidance with quantified dollar impact via a Streamlit dashboard. The stack targets Google Cloud Run for the app and Cloud SQL for Postgres (with optional IAM auth). Postgres provider is agnostic; SSL may be required depending on provider.
 
-## 🚀 Quick Start
+Table of Contents
+- Overview
+- System Architecture
+- Repository Structure
+- Environment & Configuration
+- Quick Start
+- Local Development
+- Data Pipelines
+- Dashboard Pages
+- Admin & Operations
+- Deployment (Google Cloud Run)
+- Troubleshooting
+- FAQ
+- Security & Secrets
+- Roadmap
+- License
 
-### Deploy to Google Cloud (Recommended)
+Overview
+- Primary Outcome: Clear daily action — Should I buy today or wait? — with confidence and dollar impact.
+- Users: Procurement lead (primary), Ops/Supply Chain, Finance/Exec, Data/ML.
+- Core Flow: Ingestion → Processing → Features → Models → Signals → Dashboard.
+
+System Architecture
+- Data Sources: Market prices (ZL=F, etc.), macro/FX, policy and congressional data, curated CSVs/APIs.
+- Storage: Postgres with schemas: raw, curated, features, sentiment, forecasts, models, app, geo, ops, strategy.
+- Processing: Python pipelines (pipelines/*) orchestrated by run_all.py.
+- Modeling: Baseline ARIMA(+ exog) and advanced NN roadmap (LSTM/GRU/TabNet/GARCH).
+- Serving: Streamlit app (app/Home.py, app/pages/*).
+- Deployment: Google Cloud Run + Cloud SQL (IAM optional) using Cloud Build. Dockerfile provided.
+
+Repository Structure
+- app/Home.py — Streamlit entrypoint (Command Center)
+- app/pages/ — Additional pages (Health, Sentiment & Market Intelligence, Strategy, Admin, Trade Intelligence)
+- pipelines/ — ingest.py, features.py, models_baseline.py, models_nn.py, econ_impact.py
+- db/session.py — SQLAlchemy engine (supports DATABASE_URL or Cloud SQL IAM)
+- sql/schema.sql — Idempotent schema for all domains
+- config/settings.py — Environment configuration
+- ml/ — Reusable model/data helpers
+- scripts/ — Setup, deploy, diagnostics, and Git helpers
+- Makefile — Common tasks (init-db, pipelines, app, gcp-setup, gcp-deploy, diagnose, git-now)
+- Docs — README.md, ALL_STEPS.md, CLOUD_RUN.md, ARCHITECTURE.md, WORKSTATION.md, DEPLOYMENT.md
+
+Environment & Configuration
+- Required
+  - DATABASE_URL: SQLAlchemy Postgres URL (include sslmode=require if your provider needs SSL)
+  - or USE_IAM_AUTH=true with Cloud SQL variables: CLOUD_SQL_CONNECTION_NAME, DB_USER, DB_NAME
+  - ADMIN_TOKEN: Token for Admin page
+  - REFRESH_HOURS: Pipeline refresh cadence (e.g., 8)
+- Optional API Keys
+  - ALPHAVANTAGE_API_KEY, FRED_API_KEY, NOAA, etc. (only if you enable related ingestions)
+- Local .env
+  - cp .env.example .env and fill values; export to shell when running locally
+
+Quick Start
+Google Cloud (Recommended)
 ```bash
-# Set your Google Cloud project
 export PROJECT_ID=your-project-id
-
-# One-command setup (enables APIs, sets up Cloud SQL/Artifact Registry/IAM)
 ./scripts/gcp_setup.sh
-
-# Deploy via Cloud Build to Cloud Run
 make gcp-deploy
 ```
+See CLOUD_RUN.md for Cloud SQL IAM, Jobs, and Scheduler.
 
-For full Cloud Run + Cloud SQL guidance (including IAM auth and Jobs scheduling), see CLOUD_RUN.md.
-
-### Local Development
+Local Development
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment
 cp .env.example .env
-# Edit .env with your database settings (Postgres). If your provider enforces SSL, include ?sslmode=require.
-
-# Set up database (applies sql/schema.sql)
-make init-db
-
-# Run pipelines (end-to-end)
-make pipelines
-
-# Start web app (Streamlit dashboard)
-make app
+# Edit .env (DATABASE_URL, ADMIN_TOKEN, REFRESH_HOURS). If SSL is required, add ?sslmode=require.
+make init-db   # applies sql/schema.sql
+make pipelines # run end-to-end (or python run_all.py)
+make app       # launch Streamlit locally
 ```
 
-## 📊 Features
+Data Pipelines
+- Orchestration: run_all.py (calls all stages)
+- Stages
+  - pipelines/ingest.py: Loads ZL=F daily prices to curated.prices_daily; upserts app.parameters.refresh_hours
+  - pipelines/features.py: Computes technical/macro placeholders into features.*
+  - pipelines/models_baseline.py: Writes forecasts.price_baseline
+  - pipelines/models_nn.py: Placeholder for NN outputs to forecasts.price_nn
+  - pipelines/econ_impact.py: Computes app.signals_today and app.econ_impact
+- Schema Guarantees
+  - sql/schema.sql is safe to re-apply; uses IF NOT EXISTS and unique constraints for idempotency
 
-### Procurement Command Center
-- **Real-time Signals**: BUY/WATCH/HOLD recommendations with confidence scores
-- **Price Forecasting**: 7-day to 365-day forecasts using ARIMA and neural networks
-- **Economic Impact**: Dollar impact calculations for procurement decisions
-
-### Market Intelligence
-- **Sentiment Analysis**: News and policy impact scoring
-- **Technical Indicators**: RSI, moving averages, volatility measures
-- **Supply Chain Mapping**: Geographic visualization of key nodes and disruptions
-
-### Strategy Lab
-- **Scenario Modeling**: "What if" analysis for droughts, tariffs, demand changes
-- **Backtesting**: Historical performance of different procurement strategies
-- **Risk Assessment**: VaR calculations and hedge recommendations
-
-## 🖥️ Dashboard Pages
-
-Current pages (app/pages):
-- Health: Connection checks, row counts, and latest records; tips for DATABASE_URL vs Cloud SQL IAM.
-
-- Page 1 — Procurement Command Center (Chris’s Daily Decision Page):
-  - Traffic Light Signal System (giant circular indicator):
+Dashboard Pages (app/pages)
+- 0 — Health
+  - Connection checks, row counts, latest records; tips for DATABASE_URL vs Cloud SQL IAM.
+- 1 — Procurement Command Center (Chris’s Daily Decision Page)
+  - Traffic Light Signal System (giant circular indicator)
     - RED: "HOLD - Volatility >8% or price >$0.65/lb"
     - YELLOW: "WATCH - Decision zone, check scenarios"
     - GREEN: "BUY NOW - Optimal window detected"
-  - Confidence meter (0–100% based on neural network agreement)
-  - Dollar impact display: e.g., "Buying today vs waiting: +$47,000 cost" or "- $23,000 savings"
-  - Live Price Intelligence (main chart + overlays):
-    - ZL futures with last 5 purchase points, AI next-30-day forecast band, key support/resistance
-    - Volume spikes correlated with China buying
-  - Real-time drivers side panel: China overnight buying, Brazil weather, crush margins, fund positioning
-  - Procurement Scenarios: sliders for need-in-30-days, harvest pressure, 50/50 hedge; output table + risk alerts
-
-- Page 2 — Sentiment & Market Intelligence:
-  - Market Mood Ring (semi-circle gauge): Extremely Bearish ← Neutral → Extremely Bullish
-  - Weighted inputs: News sentiment (40%), Fund positioning (30%), Technicals (20%), Weather (10%)
-  - 16-Category News Grid (4x4) with drilldowns and impact scores
-  - Narrative Intelligence (auto-updated every 4 hours) with key changes since yesterday
-
-- Page 3 — Strategy (Chris’s Business Intelligence Page):
-  - Optimal Procurement Windows: calendar heatmap + seasonal patterns; overlays for WASDE, OPEX, FND
-  - Contract Strategy Optimizer: current mix (e.g., 40/30/30), comparison (spot vs 30/90-day), basis/storage implications
-  - Industry Intelligence (4 columns): Key Players, Pricing Trends, Recent Developments, Market Structure
-  - Deep Dive Analytics Tabs:
-    1) U.S. Production & Storage (map + weekly crush/utilization table)
-    2) Global Supply & Demand (stacked S&D + trade flow diagram)
-    3) Soy Complex Value Chain (interactive flow + profitability calc)
-    4) Food & Industrial Demand (restaurant metrics, competing oils, biodiesel curve)
-  - Strategy Tools (sidebar): quick calculators, performance metrics, AI strategy suggestions
-
-- Page 4 — Geopolitical & Trade Intelligence (context only — Command Center owns the signal):
-  - Tariff Threat Matrix: probability and proposed rate by country/commodity
-  - Trump Feed Impact: trade-keyword parsing, historical correlation, alerting (e.g., HIGH RISK windows)
-  - Policy Timeline and Congressional Trade Votes: upcoming votes, pass probabilities, impact assessment
-  - Country Snapshots: US–China, Brazil, India/Pakistan, EU/UK key metrics
-  - FX & Macro Panel: BRL/USD, DXY, WTI, rates (features.fx_trade)
-  - Trade War Alerts: DEFCON level, flash updates, historical patterns, action items
-
-- Admin (protected by ADMIN_TOKEN): Parameters (e.g., refresh cadence), manual pipeline triggers.
-
-## 🏗️ Architecture
-
-### Core Pipeline
-
-Ingestion → Processing → Features → Models → Signals → Dashboard
-
-Ingestion
-
-CSV uploads (ZL, ZS, ZC, etc.) → gs://cbi-v13-futures-data
-
-Public datasets (NOAA, GDELT, FEC, BLS, USDA, etc.) → raw.*
-
-Scrapers/APIs for soybean oil procurement reports, policy events, and industry intelligence
-
-Processing
-
-raw → staging → curated cleaning + schema enforcement
-
-Data enrichment: basis, spreads, weather overlays, policy flags
-
-Features
-
-features.market_signals (futures + spreads + vol surfaces)
-
-features.weather_supply_impact (US Midwest + Brazil/Argentina forecasts)
-
-features.china_demand_composite (hog herd, crushing margins, state reserves)
-
-features.tariff_risk_matrix (tariffs, WTO disputes, quotas, retaliation probability)
-
-features.sentiment_scores (news/NLP with bullish/bearish classification)
-
-🤖 Models in the Stack
-1. BigQuery ML — Baseline Forecasting
-
-Model: ARIMA_PLUS_XREG
-
-Inputs:
-
-Target = ZL price series (raw.zl_data.Last)
-
-External regressors = weather indices, crush margins, USD/BRL
-
-Purpose:
-
-Quick, low-latency forecasts for 1w/1m/3m horizons
-
-Used for smoke tests and procurement “sanity signals”
-
-2. Vertex AI — Advanced ML Models
-
-Model Types:
-
-LSTM / GRU (time series) → nonlinear price forecasting with multiple exogenous features
-
-TabNet → tabular deep learning for procurement decision optimization
-
-GARCH/HAR models (custom jobs) → volatility/risk forecasting
-
-Inputs:
-
-Extended futures (ZL, ZS, ZC, palm, sunflower)
-
-Weather forecasts (NOAA, ECMWF, INMET, SMN)
-
-Policy/tariff events (GDELT, WTO, USTR)
-
-Sentiment scores (EmbeddingGemma / FinancialBERT sentiment)
-
-Purpose:
-
-Capture nonlinear interactions (e.g., USD ↑ + Brazil drought + biodiesel mandate = ZL spike)
-
-Scenario stress tests and Monte Carlo simulation
-
-3. StaryNet — Quant Templates
-
-Role: Orchestration + Auto-feature pipelines
-
-Capabilities:
-
-Time-series feature engineering (lags, seasonality, spreads)
-
-Scenario testing (cointegration, VAR, Monte Carlo)
-
-Portfolio/risk modeling (hedging strategies, procurement VaR)
-
-Purpose:
-
-“Quant-in-a-box” to reduce wiring complexity
-
-Plugs into BigQuery + Vertex outputs
-
-4. Generative AI RAG (Cloud SQL + Vertex AI Embeddings)
-
-Role: News/Geopolitical Sentiment → Signals
-
-Pipeline:
-
-News scrapers (policy, weather, ESG, strikes, tariffs, biofuel mandates) → Cloud SQL
-
-Embeddings generated → semantic search (RAG)
-
-Vertex AI → classify relevance (soybean oil vs noise)
-
-Output = features.sentiment_scores with (relevance, bullish/bearish, conviction, half-life)
-
-Purpose:
-
-Power the “24/7 Digital Watchtower”
-
-Convert unstructured text into procurement-relevant signals
-
-📊 Dashboard Outputs (Chris’s View)
-
-Procurement Command Center
-
-Current wholesale soybean oil vs contract
-
-Buy/Wait/Hold signals (w/ dollar impact)
-
-Next 30 days recommended hedge windows
-
-Business Health Monitor
-
-Restaurant industry demand index (QSR expansion, sales trends)
-
-Competitive oil spreads (soy vs palm, sunflower, canola)
-
-Margin optimization: oil costs vs SoyMAX/StableMAX pricing power
-
-Risk & Operations
-
-Supply chain alerts (strikes, port congestion, freight bottlenecks)
-
-Biofuel mandates & policy shifts (RFS, LCFS, SAF, Indonesia B40)
-
-ESG/deforestation enforcement risks (EUDR deadlines, exemptions)
-
-Scenario Explorer
-
-“What if Brazil harvest down 20%?” → price impact
-
-“What if tariffs escalate?” → procurement cost forecast
-
-“What if SAF demand spikes?” → oil demand uplift
-
-🧭 What’s Noise vs What Stays
-
-Keep: Procurement-driven intelligence (oil prices, crush spreads, tariffs, weather, biofuels, logistics, demand).
-
-Drop/Noise: Pure technical trading charts (RSI/MACD), over-detailed academic analysis, excessive crop minutiae.
-
-Principle: Every chart answers:
-
-Should I buy oil today or wait?
-
-What’s threatening my supply chain this month?
-
-How is customer demand trending?
-
-Where can I optimize costs/margins?
-
-✅ So the models stack like this:
-
-BQML ARIMA_PLUS_XREG → fast baselines (cheap, explainable).
-
-Vertex AI (LSTM/GRU/TabNet/GARCH) → heavy nonlinear modeling & risk.
-
-StaryNet → orchestration + quant templates (stress tests, cointegration).
-
-GenAI RAG → turn unstructured global news/events into procurement signals.
+  - Confidence meter (0–100% based on model agreement)
+  - Dollar impact display (e.g., "Buying today vs waiting: +$47,000 cost" or "-$23,000 savings")
+  - Live Price Intelligence (ZL futures, last 5 purchase points, AI 30‑day band, support/resistance)
+  - Real-time drivers: China buying, Brazil weather, crush margins, fund positioning
+  - Procurement Scenarios: sliders (needs, harvest pressure, 50/50 hedge) + risk alerts
+- 2 — Sentiment & Market Intelligence
+  - Market Mood Ring gauge; weighted inputs: News 40%, Funds 30%, Technicals 20%, Weather 10%
+  - 16‑Category News Grid with drilldowns and impact scores
+  - Narrative Intelligence updated every 4 hours with key changes vs yesterday
+- 3 — Strategy (Business Intelligence)
+  - Procurement windows (calendar heatmap + seasonal patterns; overlays: WASDE, OPEX, FND)
+  - Contract Strategy Optimizer (mix, spot vs 30/90‑day, basis/storage implications)
+  - Industry Intelligence columns: Key Players, Pricing Trends, Recent Developments, Market Structure
+  - Deep‑Dive Tabs: US Production & Storage; Global S&D; Soy Complex Value Chain; Food & Industrial Demand
+  - Strategy Tools: calculators, performance metrics, AI suggestions
+- 4 — Geopolitical & Trade Intelligence
+  - Tariff Threat Matrix (probability, proposed rates)
+  - Trump Feed Impact (keyword parsing, historical correlation, risk alerts)
+  - Policy Timeline and Congressional Votes (probabilities, impacts)
+  - Country Snapshots (US‑China, Brazil, India/Pakistan, EU/UK)
+  - FX & Macro Panel (BRL/USD, DXY, WTI, rates)
+  - Trade War Alerts (DEFCON, flash updates, historical patterns, action items)
+- Admin (protected)
+  - Manage parameters (e.g., refresh cadence), manual pipeline triggers
+
+Admin & Operations
+- Makefile Targets
+  - init-db — apply schema to DATABASE_URL
+  - pipelines — run full pipeline chain
+  - app — start Streamlit
+  - gcp-setup — provision GCP infra (APIs, Cloud SQL, Artifact Registry)
+  - gcp-deploy — build & deploy via Cloud Build to Cloud Run
+  - diagnose — run repo/app diagnostics
+  - git-now — stage, commit, push (uses scripts/git_now.sh)
+- Diagnostics
+  - python scripts/diagnose.py prints environment, Git, network, DB reachability (with hints for SSL/Cloud SQL IAM)
+
+Deployment (Google Cloud Run)
+- Cloud Build
+  - make gcp-deploy builds container and deploys to Cloud Run
+- Database Options
+  - DATABASE_URL (any Postgres) — include sslmode=require if needed
+  - Cloud SQL IAM — set USE_IAM_AUTH=true and CLOUD_SQL_CONNECTION_NAME, DB_USER, DB_NAME
+- Jobs & Scheduling
+  - Cloud Run Jobs for pipelines; schedule via Cloud Scheduler (see CLOUD_RUN.md)
+
+Troubleshooting
+- Database not reachable
+  - Ensure DATABASE_URL is set (or USE_IAM_AUTH=true with Cloud SQL vars)
+  - Some providers require ?sslmode=require in the URL
+- Ingestion or pipelines fail
+  - Rerun make pipelines; check logs; ensure outbound internet and symbols are valid
+- Empty charts
+  - Verify curated.prices_daily and forecasts.price_baseline have rows; run pipelines
+- Git issues
+  - make git-now or bash scripts/git_doctor.sh
+
+FAQ
+- Do I need Google Cloud? No; you can run locally or on any host. README emphasizes Cloud Run because it’s a solid default.
+- Which Postgres? Any managed Postgres is fine. If SSL is enforced, include sslmode=require. Cloud SQL IAM is supported.
+- Where do signals come from? From model outputs (forecasts + econ impact), not heuristics embedded in pages.
+
+Security & Secrets
+- Store secrets (DATABASE_URL, ADMIN_TOKEN, API keys) as environment variables.
+- Consider Google Secret Manager for production.
+- Admin page is token‑protected; rotate ADMIN_TOKEN periodically.
+
+Roadmap
+- Harden baseline ARIMA(+ exog) with parameter search and monitoring
+- Implement LSTM/GRU in models_nn.py and persist to forecasts.price_nn
+- Expand ingestions (FX, weather, policy feeds) and enrich features
+- Add app.pipeline_runs logging and surface status on Admin page
+- Integrate sentiment/RAG pipeline and alerting
+
+License
+This project is licensed under the MIT License. See LICENSE for details.
