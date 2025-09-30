@@ -1,6 +1,6 @@
 # Convenience commands for local dev
 
-.PHONY: help init-db pipelines app gcp-setup gcp-deploy workstation-check diagnose git-doctor git-now
+.PHONY: help init-db pipelines app gcp-setup gcp-deploy workstation-check diagnose audit git-doctor git-now
 
 help:
 	@echo "Targets:"
