@@ -9,6 +9,11 @@ from db.session import get_engine
 
 MODEL_NAME = "baseline_arima_placeholder"
 MODEL_VERSION = "0.1.0"
+# NOTE: This baseline is horizon-aware but factor-agnostic.
+# Upcoming alignment uses exogenous features per the Modeling Plan:
+#  - Weather (precip/temp anomalies), Crush proxy (COSI), BOPO spread (palm),
+#  - Macro/FX (DXY, BRLUSD), Policy regime dummies.
+# Baseline will later become ARIMA(+exog) using these features; today we keep a safe variance band.
 
 
 def run():

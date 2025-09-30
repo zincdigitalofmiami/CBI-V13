@@ -408,6 +408,10 @@ Security & Secrets
 - Consider Google Secret Manager for production.
 - Admin page is token‑protected; rotate ADMIN_TOKEN periodically.
 
+Modeling Plan
+- See MODELING_PLAN.md for the quantitative driver hierarchy and how it maps to our features/models, plus today’s acceptance criteria.
+- See TODAY_TODO.md for the prioritized execution checklist to complete alignment today.
+
 Roadmap
 - Harden baseline ARIMA(+ exog) with parameter search and monitoring
 - Implement LSTM/GRU in models_nn.py and persist to forecasts.price_nn
