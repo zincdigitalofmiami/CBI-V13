@@ -1,13 +1,14 @@
 # Convenience commands for local dev
 
-.PHONY: help init-db pipelines app neon-provision workstation-check diagnose git-doctor git-now
+.PHONY: help init-db pipelines app gcp-setup gcp-deploy workstation-check diagnose git-doctor git-now
 
 help:
 	@echo "Targets:"
 	@echo "  init-db             Apply sql/schema.sql to DATABASE_URL (requires psql)"
 	@echo "  pipelines           Run full pipeline chain (run_all.py)"
 	@echo "  app                 Launch Streamlit app"
-	@echo "  neon-provision      Create Neon project/db via API (requires NEON_API_KEY)"
+	@echo "  gcp-setup           Set up Google Cloud infrastructure (Cloud SQL, Artifact Registry, etc.)"
+	@echo "  gcp-deploy          Deploy to Google Cloud Run using Cloud Build"
 	@echo "  workstation-check   Verify/start Cloud Workstation and print Gateway steps"
 	@echo "  diagnose            Run repo/app connection diagnostics"
 	@echo "  git-doctor          Diagnose Git 'nothing showing' issues"
@@ -23,9 +24,13 @@ pipelines:
 app:
 	streamlit run app/Home.py
 
-neon-provision:
-	@[ -n "$$NEON_API_KEY" ] || (echo "Set NEON_API_KEY env var" && exit 1)
-	python scripts/neon_provision.py --project-name $${NEON_PROJECT_NAME:-cbi-v13} --region $${NEON_REGION:-aws-us-east-1} --database $${NEON_DATABASE:-cbi} --role $${NEON_ROLE:-app}
+gcp-setup:
+	@[ -n "$$PROJECT_ID" ] || (echo "Set PROJECT_ID env var" && exit 1)
+	bash scripts/gcp_setup.sh
+
+gcp-deploy:
+	@[ -n "$$PROJECT_ID" ] || (echo "Set PROJECT_ID env var" && exit 1)
+	gcloud builds submit --config cloudbuild.yaml
 
 workstation-check:
 	@[ -n "$$PROJECT_ID" ] || (echo "Set PROJECT_ID, REGION, CLUSTER, CONFIG, WORKSTATION env vars" && exit 1)

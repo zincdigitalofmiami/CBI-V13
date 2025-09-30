@@ -1,4 +1,4 @@
--- Neon Postgres schema for U.S. Oil Solution Intelligence
+-- Google Cloud SQL Postgres schema for U.S. Oil Solution Intelligence
 
 -- Create schemas
 CREATE SCHEMA IF NOT EXISTS raw;

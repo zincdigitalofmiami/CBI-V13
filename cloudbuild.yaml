@@ -1,14 +1,14 @@
 # Cloud Build pipeline to build the CBI-V13 image and deploy to Cloud Run (service + job)
 # Usage:
-# - In Google Cloud Console (cbi-v14), create a Cloud Build trigger on your repo.
+# - In Google Cloud Console, create a Cloud Build trigger on your repo.
 # - Set the following substitutions (or edit defaults below):
 #   _REGION: us-central1
-#   _SERVICE_NAME: cbi-v14-app
-#   _JOB_NAME: cbi-v14-pipelines
-#   _REPO_NAME: cbi-v14-repo
-#   _DB_NAME: cbi
+#   _SERVICE_NAME: cbi-v13-app
+#   _JOB_NAME: cbi-v13-pipelines
+#   _REPO_NAME: cbi-v13-repo
+#   _DB_NAME: cbi_v13
 #   _DB_USER: postgres
-#   _CLOUD_SQL_INSTANCE: cbi-v14-sql
+#   _CLOUD_SQL_INSTANCE: cbi-v13-sql
 #   _USE_IAM_AUTH: "true"
 #   _REFRESH_HOURS: "8"
 #   _ADMIN_TOKEN: (optional; recommended to use Secret Manager and set at deploy time)
@@ -22,16 +22,16 @@
 
 substitutions:
   _REGION: us-central1
-  _SERVICE_NAME: cbi-v14-app
-  _JOB_NAME: cbi-v14-pipelines
-  _REPO_NAME: cbi-v14-repo
-  _DB_NAME: cbi
+  _SERVICE_NAME: cbi-v13-app
+  _JOB_NAME: cbi-v13-pipelines
+  _REPO_NAME: cbi-v13-repo
+  _DB_NAME: cbi_v13
   _DB_USER: postgres
-  _CLOUD_SQL_INSTANCE: cbi-v14-sql
+  _CLOUD_SQL_INSTANCE: cbi-v13-sql
   _USE_IAM_AUTH: "true"
   _REFRESH_HOURS: "8"
   _ADMIN_TOKEN: ""
-  _RUNTIME_SA: "cbi-v14-runner@${PROJECT_ID}.iam.gserviceaccount.com"
+  _RUNTIME_SA: "cbi-v13-runner@${PROJECT_ID}.iam.gserviceaccount.com"
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -1,14 +1,38 @@
-Title: Deploy to Google Cloud Run (App + Pipelines) — Single Platform
+# Deploy CBI-V13 to Google Cloud
 
-Overview
-This guide uses Google Cloud Run to host the Streamlit app and Google Cloud Run Jobs + Cloud Scheduler to run pipelines. For a 100% Google Cloud setup, use Cloud SQL for Postgres with IAM Database Authentication (no service account JSON key needed). The app can connect via either a standard DATABASE_URL or IAM auth using the Cloud SQL Python Connector.
+This guide provides complete setup for deploying CBI-V13 to Google Cloud using:
+- **Cloud SQL** for PostgreSQL database with IAM authentication
+- **Cloud Run** for the Streamlit web application
+- **Cloud Run Jobs** for data pipeline execution
+- **Cloud Build** for automated deployment
 
-Prerequisites
-- GCP project: cbi-v13 (Project number: 369300535471)
-- gcloud CLI authenticated: gcloud auth login; gcloud config set project cbi-v13
-- Artifact Registry API, Cloud Run API, Cloud Scheduler API enabled
-- DATABASE_URL for Postgres (Cloud SQL or other) with sslmode=require if needed
-- ADMIN_TOKEN value
+## Quick Setup
+
+Run the automated setup script:
+
+```bash
+# Set your project ID first
+export PROJECT_ID=your-project-id
+
+# Run the setup script
+./scripts/gcp_setup.sh
+```
+
+This script will:
+- Enable required Google Cloud APIs
+- Create Cloud SQL instance with IAM auth
+- Set up Artifact Registry
+- Create necessary service accounts and IAM bindings
+- Generate admin token secret
+
+## Manual Setup (Alternative)
+
+If you prefer manual setup, follow the detailed steps below.
+
+### Prerequisites
+- Google Cloud project with billing enabled
+- `gcloud` CLI authenticated: `gcloud auth login && gcloud config set project YOUR_PROJECT_ID`
+- Required APIs enabled (or run the setup script)
 
 1) Configure environment
 - export PROJECT_ID=cbi-v13

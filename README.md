@@ -1,7 +1,62 @@
-# CBI-V13
-Crystal Ball V13
-Project Crystal Ball (CBI-V13) — Model & Pipeline Design
-📐 Core Pipeline Architecture
+# CBI-V13: Crystal Ball Intelligence Platform
+
+**Soybean Oil Market Intelligence & Procurement Decision Support System**
+
+Crystal Ball V13 (CBI-V13) is an AI-powered platform that provides real-time market intelligence, price forecasting, and procurement recommendations for soybean oil trading and procurement decisions.
+
+## 🚀 Quick Start
+
+### Deploy to Google Cloud (Recommended)
+```bash
+# Set your Google Cloud project
+export PROJECT_ID=your-project-id
+
+# One-command setup
+./scripts/gcp_setup.sh
+
+# Deploy
+make gcp-deploy
+```
+
+### Local Development
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your database settings
+
+# Set up database
+make init-db
+
+# Run pipelines
+make pipelines
+
+# Start web app
+make app
+```
+
+## 📊 Features
+
+### Procurement Command Center
+- **Real-time Signals**: BUY/WATCH/HOLD recommendations with confidence scores
+- **Price Forecasting**: 7-day to 365-day forecasts using ARIMA and neural networks
+- **Economic Impact**: Dollar impact calculations for procurement decisions
+
+### Market Intelligence
+- **Sentiment Analysis**: News and policy impact scoring
+- **Technical Indicators**: RSI, moving averages, volatility measures
+- **Supply Chain Mapping**: Geographic visualization of key nodes and disruptions
+
+### Strategy Lab
+- **Scenario Modeling**: "What if" analysis for droughts, tariffs, demand changes
+- **Backtesting**: Historical performance of different procurement strategies
+- **Risk Assessment**: VaR calculations and hedge recommendations
+
+## 🏗️ Architecture
+
+### Core Pipeline
 
 Ingestion → Processing → Features → Models → Signals → Dashboard
 
