@@ -272,3 +272,74 @@ ALTER TABLE models.runs
 
 ALTER TABLE app.explanations
     ADD CONSTRAINT IF NOT EXISTS uq_app_explanations UNIQUE (run_id, ds);
+
+
+-- Trade Intelligence additions (optional, safe if absent in app)
+CREATE TABLE IF NOT EXISTS curated.trade_policy_probs (
+  as_of date NOT NULL,
+  country text NOT NULL,
+  commodity text NOT NULL,
+  prob double precision NOT NULL,
+  proposed_rate double precision,
+  rationale text,
+  PRIMARY KEY (as_of, country, commodity)
+);
+
+CREATE TABLE IF NOT EXISTS curated.trade_timeline (
+  event_ts timestamptz NOT NULL,
+  label text NOT NULL,
+  category text,
+  url text,
+  importance int,
+  PRIMARY KEY (event_ts, label)
+);
+
+CREATE TABLE IF NOT EXISTS raw.social_posts (
+  ts timestamptz NOT NULL,
+  author text,
+  source text,
+  text text,
+  url text,
+  PRIMARY KEY (ts, url)
+);
+
+CREATE TABLE IF NOT EXISTS sentiment.social_impact (
+  ts timestamptz NOT NULL,
+  author text,
+  trade_relevance double precision,
+  sentiment double precision,
+  entities jsonb,
+  impact_est double precision,
+  PRIMARY KEY (ts, author)
+);
+
+CREATE TABLE IF NOT EXISTS curated.congress_votes (
+  bill_id text PRIMARY KEY,
+  chamber text,
+  title text,
+  scheduled_date date,
+  topic text,
+  prob_pass double precision,
+  impact_json jsonb,
+  url text
+);
+
+CREATE TABLE IF NOT EXISTS curated.country_intel (
+  as_of date NOT NULL,
+  country text NOT NULL,
+  section text NOT NULL,
+  metric text NOT NULL,
+  value text,
+  score double precision,
+  PRIMARY KEY (as_of, country, section, metric)
+);
+
+-- View for FX trade context (safe to create/replace)
+CREATE OR REPLACE VIEW features.fx_trade AS
+SELECT m.ds,
+       m.dxy,
+       m.wti,
+       m.rates10y,
+       f.rate AS brl_usd
+FROM features.macro m
+LEFT JOIN raw.fx f ON f.ts::date = m.ds AND f.base='BRL' AND f.quote='USD';

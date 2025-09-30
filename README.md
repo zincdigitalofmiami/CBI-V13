@@ -62,10 +62,8 @@ Current pages (app/pages):
 - Health: Connection checks, row counts, and latest records; tips for DATABASE_URL vs Cloud SQL IAM.
 - Market Intelligence: Prices, baseline forecasts, and sentiment/indicators that feed procurement signals.
 - Strategy Lab & Supply Chain Map: Scenario tools and a map view for geo risks and supply chain nodes.
+- Trade Intelligence: Policy/FX/trade insights with timelines, congressional items, country snapshots, FX panel, and a 'Trump Effect' monitor; contextual only (the BUY/WATCH/HOLD signal remains model-driven on the Command Center).
 - Admin (protected by ADMIN_TOKEN): Parameters (e.g., refresh cadence), manual pipeline triggers.
-
-Planned additions (high level):
-- Trade Intelligence: Policy/FX/trade insights with timelines, congressional items, country snapshots, and alerting; contextual only (the BUY/WATCH/HOLD signal remains model-driven on the Command Center).
 
 ## 🏗️ Architecture
 
