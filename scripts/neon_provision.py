@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 """
-Neon provisioning helper
-- Creates a Neon project (and default branch) and returns a ready-to-use DATABASE_URL.
-- Requires NEON_API_KEY in env (Bearer token from console.neon.tech).
+DEPRECATED: Neon is no longer part of this project's scope.
 
-Usage:
-  NEON_API_KEY=... python scripts/neon_provision.py --project-name my-cbi-v13 --region aws-us-east-1 --database cbi --role app
+This script was previously used to provision Neon Postgres via the Neon API.
+It is retained only for historical context and should not be used.
 
-Notes:
-- Neon is a managed Postgres service only; it does not host your web app.
-- This script aims for a sensible default flow using Neon v2 API.
+Use your chosen managed Postgres provider's console or Terraform to create a database,
+then set DATABASE_URL in your environment and apply sql/schema.sql.
 """
 import argparse
 import os
@@ -86,6 +83,8 @@ def build_sqlalchemy_url(endpoint, role: str, database: str):
 
 
 def main():
+    print("DEPRECATED: Neon is no longer in the project scope. Use your managed Postgres provider instead.")
+    sys.exit(1)
     p = argparse.ArgumentParser()
     p.add_argument("--project-name", required=True)
     p.add_argument("--region", default="aws-us-east-1", help="Neon region id (e.g., aws-us-east-1)")

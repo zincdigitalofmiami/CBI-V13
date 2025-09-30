@@ -103,8 +103,8 @@ def check_db() -> None:
     use_iam = os.getenv("USE_IAM_AUTH", "false").lower() in ("1", "true", "yes")
 
     hints = []
-    if ("neon.tech" in db_url or "neon" in db_url) and "sslmode=" not in db_url:
-        hints.append("Add ?sslmode=require to your Neon DATABASE_URL")
+    if db_url.startswith("postgresql") and "sslmode=" not in db_url:
+        hints.append("If your provider requires SSL, add ?sslmode=require to your DATABASE_URL")
     if use_iam and not os.getenv("CLOUD_SQL_CONNECTION_NAME"):
         hints.append("Set CLOUD_SQL_CONNECTION_NAME for Google Cloud SQL IAM auth")
 

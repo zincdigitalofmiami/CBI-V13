@@ -11,12 +11,14 @@ Crystal Ball V13 (CBI-V13) is an AI-powered platform that provides real-time mar
 # Set your Google Cloud project
 export PROJECT_ID=your-project-id
 
-# One-command setup
+# One-command setup (enables APIs, sets up Cloud SQL/Artifact Registry/IAM)
 ./scripts/gcp_setup.sh
 
-# Deploy
+# Deploy via Cloud Build to Cloud Run
 make gcp-deploy
 ```
+
+For full Cloud Run + Cloud SQL guidance (including IAM auth and Jobs scheduling), see CLOUD_RUN.md.
 
 ### Local Development
 ```bash
@@ -25,15 +27,15 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your database settings
+# Edit .env with your database settings (Postgres). If your provider enforces SSL, include ?sslmode=require.
 
-# Set up database
+# Set up database (applies sql/schema.sql)
 make init-db
 
-# Run pipelines
+# Run pipelines (end-to-end)
 make pipelines
 
-# Start web app
+# Start web app (Streamlit dashboard)
 make app
 ```
 
@@ -53,6 +55,17 @@ make app
 - **Scenario Modeling**: "What if" analysis for droughts, tariffs, demand changes
 - **Backtesting**: Historical performance of different procurement strategies
 - **Risk Assessment**: VaR calculations and hedge recommendations
+
+## 🖥️ Dashboard Pages
+
+Current pages (app/pages):
+- Health: Connection checks, row counts, and latest records; tips for DATABASE_URL vs Cloud SQL IAM.
+- Market Intelligence: Prices, baseline forecasts, and sentiment/indicators that feed procurement signals.
+- Strategy Lab & Supply Chain Map: Scenario tools and a map view for geo risks and supply chain nodes.
+- Admin (protected by ADMIN_TOKEN): Parameters (e.g., refresh cadence), manual pipeline triggers.
+
+Planned additions (high level):
+- Trade Intelligence: Policy/FX/trade insights with timelines, congressional items, country snapshots, and alerting; contextual only (the BUY/WATCH/HOLD signal remains model-driven on the Command Center).
 
 ## 🏗️ Architecture
 

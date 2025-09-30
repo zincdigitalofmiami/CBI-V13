@@ -1,12 +1,14 @@
 Title: ALL STEPS — End-to-End Setup, Run, Deploy, Verify, and Troubleshoot
 
 Overview
-This document provides a complete, sequential checklist to take this repository from zero to a working system locally and in production on Render, using Neon Postgres as the database. It is intentionally verbose so you can follow it line-by-line.
+This document provides a complete, sequential checklist to take this repository from zero to a working system locally and in production on Render, using a managed Postgres database. It is intentionally verbose so you can follow it line-by-line.
+
+Note: If you are deploying on Google Cloud, see CLOUD_RUN.md for a full Cloud Run + Cloud SQL (IAM auth supported) guide. The steps below remain valid for local use; deployment differs per provider.
 
 Sections
 - A. Prerequisites
 - B. Local Environment Setup
-- C. Database Setup (Neon)
+- C. Database Setup (Postgres)
 - D. Apply Schema
 - E. First Data Ingestion and Pipeline Run
 - F. Launch the Streamlit App Locally
@@ -21,7 +23,7 @@ Sections
 
 A. Prerequisites
 - Python 3.12 installed
-- A Neon Postgres database (connection string ready)
+- A Postgres database (managed service recommended; connection string ready)
 - psql CLI installed (optional but recommended for quick checks)
 - Render account (if deploying)
 
@@ -45,8 +47,8 @@ B. Local Environment Setup
   - REFRESH_HOURS=8  # or your preference
   - (Optional API keys) ALPHAVANTAGE_API_KEY, FRED_API_KEY, etc.
 
-C. Database Setup (Neon)
-- Ensure your Neon project is created and you have the connection string.
+C. Database Setup (Postgres)
+- Ensure your Postgres instance is available and you have the connection string.
 - The app uses SQLAlchemy with psycopg2 driver per .env.example format.
 
 D. Apply Schema
@@ -102,7 +104,7 @@ H. Deploy to Render (Web Service)
 - Start Command: streamlit run app/Home.py --server.port $PORT --server.address 0.0.0.0
 
 2) Environment variables (Render → Settings → Environment)
-- DATABASE_URL = your Neon connection string (with sslmode=require if needed)
+- DATABASE_URL = your Postgres connection string (include sslmode if your provider requires it)
 - ADMIN_TOKEN = your token
 - REFRESH_HOURS = 8 (or preferred)
 - Optional API keys as needed
@@ -141,7 +143,7 @@ L. Troubleshooting
 Common issues and fixes
 - Database not reachable in app
   - Ensure DATABASE_URL is set in Render and locally
-  - Ensure sslmode=require if Neon enforces SSL
+  - Include sslmode=require if your provider enforces SSL
   - Check db/session.py uses SQLAlchemy URL with +psycopg2 (matches .env.example)
 - Ingestion fails (yfinance)
   - Retry; ensure outbound internet allowed in your environment

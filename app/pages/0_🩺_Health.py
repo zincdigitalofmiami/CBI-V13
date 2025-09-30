@@ -55,4 +55,4 @@ st.divider()
 
 st.subheader("Next actions")
 st.markdown("- If counts are zero, run pipelines: Admin page → Run All Stages, or `make pipelines`.")
-st.markdown("- If DB not reachable, ensure DATABASE_URL is set (Neon requires ?sslmode=require) or USE_IAM_AUTH=true with Cloud SQL envs.")
+st.markdown("- If DB not reachable, ensure DATABASE_URL is set; some providers require ?sslmode=require. Or use USE_IAM_AUTH=true with Cloud SQL envs.")

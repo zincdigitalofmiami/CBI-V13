@@ -53,7 +53,7 @@ def ingest_yahoo(symbol: str = "ZL=F"):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Ingest data into Neon Postgres")
+    parser = argparse.ArgumentParser(description="Ingest data into Postgres")
     parser.add_argument("--symbol", default="ZL=F")
     args = parser.parse_args()
     ingest_yahoo(args.symbol)
