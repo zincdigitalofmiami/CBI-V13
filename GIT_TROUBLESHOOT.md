@@ -2,9 +2,12 @@ Title: Git Troubleshooting — “Nothing is showing up in Git”
 
 Use this checklist to fix the most common causes when your IDE or terminal shows no changes or can’t see your repo files.
 
-Quick command (recommended)
+Quick commands (recommended)
 - make git-doctor
   - Runs scripts/git_doctor.sh and prints status, remotes, branch, upstream, ignored files, and common fixes.
+- make git-now
+  - Stages, commits, and pushes the current repo. If 'origin' is missing, set GIT_REMOTE before running, e.g.:
+    GIT_REMOTE=git@github.com:you/your-repo.git make git-now
 
 1) Ensure you’re inside the correct folder
 - pwd should be the CBI-V13 project root (where README.md and app/ exist).

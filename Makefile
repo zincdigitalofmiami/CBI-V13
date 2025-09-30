@@ -1,6 +1,6 @@
 # Convenience commands for local dev
 
-.PHONY: help init-db pipelines app neon-provision workstation-check diagnose git-doctor
+.PHONY: help init-db pipelines app neon-provision workstation-check diagnose git-doctor git-now
 
 help:
 	@echo "Targets:"
@@ -11,6 +11,7 @@ help:
 	@echo "  workstation-check   Verify/start Cloud Workstation and print Gateway steps"
 	@echo "  diagnose            Run repo/app connection diagnostics"
 	@echo "  git-doctor          Diagnose Git 'nothing showing' issues"
+	@echo "  git-now             Stage, commit, and push current repo (set GIT_REMOTE if origin missing)"
 
 init-db:
 	@[ -n "$$DATABASE_URL" ] || (echo "Set DATABASE_URL env var" && exit 1)
@@ -39,3 +40,6 @@ diagnose:
 
 git-doctor:
 	bash scripts/git_doctor.sh
+
+git-now:
+	bash scripts/git_now.sh
