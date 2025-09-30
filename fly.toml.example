@@ -1,0 +1,24 @@
+# Fly.io configuration example for CBI-V13
+app = "cbi-v13-app"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[checks]
+  [checks.web]
+    port = 8080
+    type = "tcp"
+    interval = "15s"
+    timeout = "2s"

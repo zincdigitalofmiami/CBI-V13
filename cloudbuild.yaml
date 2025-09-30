@@ -1,0 +1,121 @@
+# Cloud Build pipeline to build the CBI-V13 image and deploy to Cloud Run (service + job)
+# Usage:
+# - In Google Cloud Console (cbi-v14), create a Cloud Build trigger on your repo.
+# - Set the following substitutions (or edit defaults below):
+#   _REGION: us-central1
+#   _SERVICE_NAME: cbi-v14-app
+#   _JOB_NAME: cbi-v14-pipelines
+#   _REPO_NAME: cbi-v14-repo
+#   _DB_NAME: cbi
+#   _DB_USER: postgres
+#   _CLOUD_SQL_INSTANCE: cbi-v14-sql
+#   _USE_IAM_AUTH: "true"
+#   _REFRESH_HOURS: "8"
+#   _ADMIN_TOKEN: (optional; recommended to use Secret Manager and set at deploy time)
+#
+# Notes:
+# - This build assumes Artifact Registry repo exists. If not, it creates it idempotently.
+# - For Cloud SQL IAM auth, the Cloud Run runtime service account must have roles/cloudsql.client.
+# - For Secret Manager, grant roles/secretmanager.secretAccessor.
+#
+# Required APIs: Cloud Build, Artifact Registry, Cloud Run Admin, Cloud Scheduler (for manual schedule), Cloud SQL Admin (if you also provision DB elsewhere).
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE_NAME: cbi-v14-app
+  _JOB_NAME: cbi-v14-pipelines
+  _REPO_NAME: cbi-v14-repo
+  _DB_NAME: cbi
+  _DB_USER: postgres
+  _CLOUD_SQL_INSTANCE: cbi-v14-sql
+  _USE_IAM_AUTH: "true"
+  _REFRESH_HOURS: "8"
+  _ADMIN_TOKEN: ""
+  _RUNTIME_SA: "cbi-v14-runner@${PROJECT_ID}.iam.gserviceaccount.com"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # Ensure Artifact Registry exists (idempotent)
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    id: ensure-artifact-registry
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        REPO_LOCATION="${_REGION}"
+        REPO_NAME="${_REPO_NAME}"
+        if ! gcloud artifacts repositories describe "${REPO_NAME}" --location="${REPO_LOCATION}" >/dev/null 2>&1; then
+          gcloud artifacts repositories create "${REPO_NAME}" \
+            --repository-format=docker \
+            --location="${REPO_LOCATION}" \
+            --description="CBI images"
+        fi
+
+  # Build and push the image to Artifact Registry
+  - name: gcr.io/kaniko-project/executor:latest
+    id: build-and-push
+    args:
+      - --destination=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:$COMMIT_SHA
+      - --destination=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:latest
+      - --cache=true
+
+  # Deploy Cloud Run service (Streamlit app)
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    id: deploy-service
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        IMAGE="${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:latest"
+        COMMON_ENV="USE_IAM_AUTH=${_USE_IAM_AUTH},CLOUD_SQL_CONNECTION_NAME=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE},DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},REFRESH_HOURS=${_REFRESH_HOURS}"
+        if [ -n "${_ADMIN_TOKEN}" ]; then EXTRA_FLAGS=(--set-env-vars ADMIN_TOKEN=${_ADMIN_TOKEN}); else EXTRA_FLAGS=(); fi
+        gcloud run deploy ${_SERVICE_NAME} \
+          --image "${IMAGE}" \
+          --region ${_REGION} \
+          --allow-unauthenticated \
+          --port 8080 \
+          --service-account ${_RUNTIME_SA} \
+          --set-env-vars "$COMMON_ENV" \
+          "${EXTRA_FLAGS[@]}"
+        gcloud run services describe ${_SERVICE_NAME} --region ${_REGION} --format='value(status.url)'
+
+  # Create or update Cloud Run Job for pipelines
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    id: create-job
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        IMAGE="${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:latest"
+        COMMON_ENV="USE_IAM_AUTH=${_USE_IAM_AUTH},CLOUD_SQL_CONNECTION_NAME=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE},DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},REFRESH_HOURS=${_REFRESH_HOURS}"
+        if [ -n "${_ADMIN_TOKEN}" ]; then JOB_ENV=(--set-env-vars ADMIN_TOKEN=${_ADMIN_TOKEN}); else JOB_ENV=(); fi
+        if gcloud run jobs describe ${_JOB_NAME} --region ${_REGION} >/dev/null 2>&1; then
+          gcloud run jobs delete ${_JOB_NAME} --quiet --region ${_REGION} || true
+        fi
+        gcloud run jobs create ${_JOB_NAME} \
+          --image "${IMAGE}" \
+          --region ${_REGION} \
+          --task-timeout=3600 \
+          --service-account ${_RUNTIME_SA} \
+          --set-env-vars "$COMMON_ENV" \
+          "${JOB_ENV[@]}" \
+          --command python --args run_all.py
+
+  # Execute the job once to seed data
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    id: execute-job
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        gcloud run jobs execute ${_JOB_NAME} --region ${_REGION} --wait
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:latest
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:$COMMIT_SHA
