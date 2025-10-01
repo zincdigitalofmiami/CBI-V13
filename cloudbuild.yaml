@@ -5,7 +5,7 @@
 #   _REGION: us-central1
 #   _SERVICE_NAME: cbi-v13-app
 #   _JOB_NAME: cbi-v13-pipelines
-#   _REPO_NAME: cbi-v13-repo
+#   _REPO_NAME: cbi-repo
 #   _DB_NAME: cbi_v13
 #   _DB_USER: postgres
 #   _CLOUD_SQL_INSTANCE: cbi-v13-sql
@@ -24,7 +24,7 @@ substitutions:
   _REGION: us-central1
   _SERVICE_NAME: cbi-v13-app
   _JOB_NAME: cbi-v13-pipelines
-  _REPO_NAME: cbi-v13-repo
+  _REPO_NAME: cbi-repo
   _DB_NAME: cbi_v13
   _DB_USER: postgres
   _CLOUD_SQL_INSTANCE: cbi-v13-sql

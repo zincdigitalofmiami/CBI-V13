@@ -255,23 +255,32 @@ CREATE TABLE IF NOT EXISTS strategy.performance (
 
 
 -- Idempotency constraints and indexes for ON CONFLICT support
-ALTER TABLE curated.prices_daily
-    ADD CONSTRAINT IF NOT EXISTS uq_prices_daily UNIQUE (ds, symbol);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_prices_daily') THEN
+        ALTER TABLE curated.prices_daily ADD CONSTRAINT uq_prices_daily UNIQUE (ds, symbol);
+    END IF;
 
-ALTER TABLE features.technical
-    ADD CONSTRAINT IF NOT EXISTS uq_features_technical UNIQUE (ds, symbol);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_features_technical') THEN
+        ALTER TABLE features.technical ADD CONSTRAINT uq_features_technical UNIQUE (ds, symbol);
+    END IF;
 
-ALTER TABLE forecasts.price_baseline
-    ADD CONSTRAINT IF NOT EXISTS uq_price_baseline UNIQUE (run_ts, ds, horizon_days);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_price_baseline') THEN
+        ALTER TABLE forecasts.price_baseline ADD CONSTRAINT uq_price_baseline UNIQUE (run_ts, ds, horizon_days);
+    END IF;
 
-ALTER TABLE forecasts.price_nn
-    ADD CONSTRAINT IF NOT EXISTS uq_price_nn UNIQUE (run_ts, ds, horizon_days);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_price_nn') THEN
+        ALTER TABLE forecasts.price_nn ADD CONSTRAINT uq_price_nn UNIQUE (run_ts, ds, horizon_days);
+    END IF;
 
-ALTER TABLE models.runs
-    ADD CONSTRAINT IF NOT EXISTS pk_models_runs PRIMARY KEY (run_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pk_models_runs') THEN
+        ALTER TABLE models.runs ADD CONSTRAINT pk_models_runs PRIMARY KEY (run_id);
+    END IF;
 
-ALTER TABLE app.explanations
-    ADD CONSTRAINT IF NOT EXISTS uq_app_explanations UNIQUE (run_id, ds);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_app_explanations') THEN
+        ALTER TABLE app.explanations ADD CONSTRAINT uq_app_explanations UNIQUE (run_id, ds);
+    END IF;
+END $$;
 
 
 -- Trade Intelligence additions (optional, safe if absent in app)

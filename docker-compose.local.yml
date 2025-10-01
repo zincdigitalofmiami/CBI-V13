@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: cbi-postgres
+    environment:
+      POSTGRES_DB: cbi_v13
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: cbi-v13:latest
+    container_name: cbi-app
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/cbi_v13
+      - ADMIN_TOKEN=local-dev-token
+      - REFRESH_HOURS=8
+    ports:
+      - "8501:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    command: >
+      sh -c "
+        echo '🚀 Starting CBI-V13 dashboard...' &&
+        streamlit run app/Home.py --server.port 8080 --server.address 0.0.0.0
+      "
+
+volumes:
+  postgres_data:
